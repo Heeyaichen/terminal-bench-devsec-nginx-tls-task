@@ -1,0 +1,58 @@
+# Docker build artifacts
+.dockerignore
+
+# Python cache and test artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+
+# Docker volumes and containers (if using docker-compose)
+.env
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Backup files
+*.bak
+*.backup
+
+# Archive files (except the final submission zip)
+*.zip
+*.tar.gz
+*.tar
+
+# Test output files that might be generated
+test-results/
+test-output/

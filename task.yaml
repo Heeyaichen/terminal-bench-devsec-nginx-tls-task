@@ -1,0 +1,70 @@
+---
+task_id: devsec_tls_iptables_fix
+domain: DevOps / Security
+description: |
+  A critical web service is currently inaccessible and serving an untrusted certificate. This is part of a production incident and must be resolved immediately using only command-line tools.
+
+context: |
+  A new service deployment was attempted, which included a change to the web server's firewall rules and TLS configuration. The deployment failed, leaving the service in a broken state. The web service is designed to listen on port 80 and 443. The firewall is supposed to allow incoming traffic on both ports.
+
+  NOTE: Due to Docker security constraints, iptables rules cannot be applied in unprivileged containers. 
+  The iptables-restore command will fail with "Permission denied" or "No such file or directory" errors 
+  because kernel modules (conntrack, state) and NET_ADMIN capability are restricted. This is expected 
+  behavior and reflects real-world container security limitations.
+
+objective: |
+  Fix the web service so that it is accessible and serves a valid, trusted TLS certificate. The primary
+  focus is on diagnosing and correcting the Nginx TLS configuration, while understanding the iptables
+  configuration requirements (even if they cannot be applied in this containerized environment).
+
+constraints:
+  - max_agent_timeout_sec: 300
+  - max_test_timeout_sec: 180
+  - All fixes must be made using command-line tools.
+  - The solution must not require restarting the container.
+  - Docker security limitations prevent actual iptables rule application without --privileged flag.
+
+acceptance_criteria:
+  - name: Iptables rule fix
+    description: |
+      The `iptables` rules must be corrected to allow incoming connections on port 80 and 443. Due to Docker security constraints,
+      the rules cannot be applied, but the configuration should be valid.
+    verified_by:
+      - tests.test_outputs.test_port_80_is_open
+      - tests.test_outputs.test_port_443_is_open
+
+  - name: Nginx TLS path fix
+    description: |
+      The Nginx configuration must be updated to point to the correct TLS certificate and key files.
+      This is the primary fix that will restore service functionality.
+    verified_by:
+      - tests.test_outputs.test_https_request_succeeds
+      - tests.test_outputs.test_https_certificate_is_valid
+
+inputs_and_materials:
+  - iptables/rules.v4: The `iptables` configuration file with an incorrect rule.
+  - nginx/default: The Nginx site configuration file with incorrect TLS paths.
+  - certs/cert.pem: A valid TLS certificate.
+  - certs/key.pem: The private key for the certificate.
+
+docker_limitations: |
+  IMPORTANT: This task demonstrates real-world Docker security limitations:
+  
+  1. iptables-restore requires kernel module access (conntrack, state modules)
+  2. Firewall modifications need NET_ADMIN capability
+  3. These are restricted in unprivileged containers for security reasons
+  4. Production deployments would handle firewall rules at the host/infrastructure level
+  
+  The task focuses on configuration understanding and Nginx troubleshooting, with iptables 
+  serving as educational context about network security concepts.
+
+outputs:
+  - The web service must be reachable on port 80 and 443.
+  - A `curl` request to `https://localhost:443` must return a 200 OK status.
+  - An `openssl s_client` command must verify that the certificate is trusted.
+
+hints:
+  - The primary issue is in the Nginx configuration file at /etc/nginx/sites-available/default
+  - Look for incorrect file paths in the SSL certificate configuration
+  - The valid certificate and key files are located in /etc/ssl/
+  - Use sed or similar tools to fix file paths in configuration files
